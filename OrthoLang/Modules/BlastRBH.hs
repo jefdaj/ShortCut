@@ -95,34 +95,50 @@ mkBlastFromFaRevEach (bCmd, sType, qType, _) = newFnA3
 
 -- TODO rewrite with newFnS3 (do this one first!)
 
-reciprocalBest :: Function
-reciprocalBest = newFnA2
-  "reciprocal_best"
-  (Exactly bht, Exactly bht)
-  (Exactly bht)
-  aReciprocalBest
-  []
+-- reciprocalBest :: Function
+-- reciprocalBest = Function
+--   { fOpChar = Nothing, fName = name
+--   , fInputs = [Exactly bht, Exactly bht] -- TODO any ht would work right?
+--   , fOutput = Exactly bht
+--   ,fTags = []
+--   , fNewRules = NewNotImplemented, fOldRules = rSimple aReciprocalBest
+--   }
+--   where
+--     name = "reciprocal_best"
 
 -- TODO how are $TMPDIR paths getting through after conversion from cutpaths??
 -- TODO why is this the only one that fails, and only when called from repeat??
-aReciprocalBest :: NewAction2
-aReciprocalBest (ExprPath out') left' right' = do
-  let loc   = "modules.blastrbh.aReciprocalBest"
-      out'' = traceA loc out' [out', left', right']
-  runCmd $ CmdDesc
-    { cmdParallel = False
-    , cmdFixEmpties = True
-    , cmdOutPath = out''
-    , cmdInPatterns = [left', right']
-    , cmdNoNeedDirs = []
-    , cmdExtraOutPaths = []
-    , cmdSanitizePaths = []
-    , cmdOptions =[]
-    , cmdBinary = "reciprocal_best.R"
-    , cmdArguments = [out', left', right']
-    , cmdExitCode = ExitSuccess
-    , cmdRmPatterns = [out']
-    }
+-- aReciprocalBest :: [Path] -> Action ()
+-- aReciprocalBest [out, left, right] = do
+--   cfg <- fmap fromJust getShakeExtra
+--   let loc = "modules.blastrbh.aReciprocalBest"
+--       out'   = fromPath loc cfg out
+--       left'  = fromPath loc cfg left
+--       right' = fromPath loc cfg right
+--       out''  = traceA loc out' [out', left', right']
+--   runCmd $ CmdDesc
+--     { cmdParallel = False
+--     , cmdFixEmpties = True
+--     , cmdOutPath = out''
+--     , cmdInPatterns = [left', right']
+--     , cmdExtraOutPaths = []
+--     , cmdSanitizePaths = []
+--     , cmdOptions =[]
+--     , cmdBinary = "reciprocal_best.R"
+--     , cmdArguments = [out', left', right']
+--     , cmdExitCode = ExitSuccess
+--     , cmdRmPatterns = [out']
+--     }
+-- aReciprocalBest args = error $ "bad argument to aReciprocalBest: " ++ show args
+
+reciprocalBest :: Function
+reciprocalBest = newFnS2
+  "reciprocal_best"
+  (Exactly bht, Exactly bht)
+  (Exactly bht)
+  "reciprocal_best.R"
+  []
+  id
 
 -------------------------
 -- reciprocal_best_all --
