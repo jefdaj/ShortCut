@@ -56,6 +56,8 @@ blastDescsRev = filter isReversible blastDescs
 -- *blast*_rev --
 -----------------
 
+-- TODO rewrite with newExprExpansion
+
 mkBlastFromFaRev :: BlastDesc -> Function
 mkBlastFromFaRev (bCmd, qType, sType, _) = newExprExpansion
   (bCmd ++ "_rev")
@@ -74,6 +76,9 @@ mBlastFromFaRev _ _ e = error "ortholang.modules.blastrbh.mBlastFromFaRev" $ "ba
 -- *blast*_rev_each --
 ----------------------
 
+-- TODO rewrite with newMap (but do it last)
+
+-- TODO fix expression paths!
 mkBlastFromFaRevEach :: BlastDesc -> Function
 mkBlastFromFaRevEach (bCmd, sType, qType, _) = newFnA3
   (bCmd ++ "_rev_each")
@@ -85,6 +90,10 @@ mkBlastFromFaRevEach (bCmd, sType, qType, _) = newFnA3
 ---------------------
 -- reciprocal_best --
 ---------------------
+
+-- TODO move to Tables.hs? And rename that to BlastHits?
+
+-- TODO rewrite with newFnS3 (do this one first!)
 
 reciprocalBest :: Function
 reciprocalBest = newFnA2
@@ -119,6 +128,8 @@ aReciprocalBest (ExprPath out') left' right' = do
 -- reciprocal_best_all --
 -------------------------
 
+-- TODO rewrite with newFnS2
+
 reciprocalBestAll :: Function
 reciprocalBestAll = newFnA2
   "reciprocal_best_all"
@@ -144,6 +155,8 @@ aReciprocalBestAll (ExprPath out') lefts' rights' = do
 -- *blast*_rbh --
 -----------------
 
+-- TODO rewrite with newExprExpansion
+
 mkBlastRbh :: BlastDesc -> Function
 mkBlastRbh d@(bCmd, qType, sType, _) = newExprExpansion
   (bCmd ++ "_rbh")
@@ -164,6 +177,8 @@ mBlastRbh _ _ _ e = error "ortholang.modules.blastrbh.mBlastRbh" $ "bad argument
 ----------------------
 -- *blast*_rbh_each --
 ----------------------
+
+-- TODO rewrite with newExprExpansion
 
 mkBlastRbhEach :: BlastDesc -> Function
 mkBlastRbhEach d@(bCmd, qType, sType, _) = newExprExpansion
