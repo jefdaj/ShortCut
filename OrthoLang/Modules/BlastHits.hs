@@ -8,6 +8,7 @@ import OrthoLang.Types
 import OrthoLang.Interpreter
 
 import OrthoLang.Modules.Blast    (bht)
+import OrthoLang.Modules.Load     (mkLoad, mkLoadPath, mkLoadEach, mkLoadPathEach, mkLoadGlob)
 import OrthoLang.Modules.CRBBlast (crb)
 import System.Exit                (ExitCode(..))
 import System.FilePath            ((</>), takeDirectory)
@@ -26,9 +27,8 @@ olModule = Module
   , mEncodings = []
   , mRules = []
   , mFunctions =
-
-    -- extract ids
-    [ extractQueries, extractQueriesEach
+    [ loadBht, loadBhtPath, loadBhtEach, loadBhtPathEach, loadBhtGlob
+    , extractQueries, extractQueriesEach
     , extractTargets, extractTargetsEach
 
     -- filter hit tables by cutoff
@@ -50,6 +50,21 @@ ht = TypeGroup
   , tgDesc  = "hit table"
   , tgMembers = [Exactly bht, Exactly crb] -- TODO mms too
   }
+
+
+---------------
+-- load_bht* --
+---------------
+
+-- this smells weird, but the whole group is needed
+-- TODO use ht instead of bht?
+-- TODO separate "_rawids" versions for when the table is already from ortholang?
+loadBht         = mkLoad         True "load_bht"           (Exactly bht)
+loadBhtPath     = mkLoadPath     True "load_bht_path"      (Exactly bht)
+loadBhtEach     = mkLoadEach     True "load_bht_each"      (Exactly bht)
+loadBhtPathEach = mkLoadPathEach True "load_bht_path_each" (Exactly bht)
+loadBhtGlob     = mkLoadGlob          "load_bht_glob"       loadBhtEach
+
 
 ----------------------
 -- extract_*(_each) --
