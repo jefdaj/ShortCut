@@ -25,6 +25,7 @@ import qualified OrthoLang.Modules.FlowChart     as FlowChart
 import qualified OrthoLang.Modules.Diamond       as Diamond
 import qualified OrthoLang.Modules.GreenCut      as GreenCut
 import qualified OrthoLang.Modules.Hmmer         as Hmmer
+import qualified OrthoLang.Modules.JustOrthologs as JustOrthologs
 import qualified OrthoLang.Modules.ListLike      as ListLike
 import qualified OrthoLang.Modules.Curl          as Curl
 import qualified OrthoLang.Modules.Load          as Load
@@ -91,6 +92,7 @@ modules =
   , Busco.olModule         -- medium complicated
   , OrthoGroups.olModule   -- complicated str code, but simple Rules?
   , SonicParanoid.olModule -- short and simple Rules
+  , JustOrthologs.olModule
 
   -- plots and figures
   , Plots.olModule     -- rewrite done
