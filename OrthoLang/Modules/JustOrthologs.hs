@@ -3,11 +3,13 @@ module OrthoLang.Modules.JustOrthologs where
 import Development.Shake
 import OrthoLang.Types
 import OrthoLang.Interpreter
+import OrthoLang.Interpreter.Sanitize (unhashIDsFile)
+import OrthoLang.Util (digest)
 import OrthoLang.Modules.SeqIO (faa, mkConcat)
 import OrthoLang.Modules.Load (mkLoad, mkLoadEach, mkLoadGlob)
 import Data.Maybe (fromJust)
 import System.Exit (ExitCode(..))
-import System.FilePath (takeDirectory)
+import System.FilePath (takeDirectory, (</>))
 
 -- TODO set -t to match nproc
 -- TODO what's the correlation value, and should the search fns expose it?
@@ -76,6 +78,7 @@ justOrthologsFormat = newFnA2
   []
 
 -- TODO this probably needs to re-load the faa after creating it to deal with ID hashing
+-- TODO also have to re-hash the ids in the final fasta?
 aJustOrthologsFormat :: NewAction2
 aJustOrthologsFormat (ExprPath out) gffPath faaPath = do
   cfg <- fmap fromJust getShakeExtra
@@ -83,17 +86,19 @@ aJustOrthologsFormat (ExprPath out) gffPath faaPath = do
       loc    = "modules.justorthologs.aJustOrthologsFormat"
       tmp'   = fromPath loc cfg tmpDir
       out'   = traceA loc out [tmp', out, gffPath, faaPath]
+      faaPath' = tmp' </> digest loc faaPath
+  unhashIDsFile (toPath loc cfg faaPath) faaPath'
   runCmd $ CmdDesc
    { cmdParallel      = False
    , cmdFixEmpties    = False
    , cmdOutPath       = out'
-   , cmdInPatterns    = [gffPath, faaPath]
+   , cmdInPatterns    = [gffPath, faaPath']
    , cmdNoNeedDirs    = []
    , cmdExtraOutPaths = []
    , cmdSanitizePaths = []
    , cmdOptions       = [Cwd $ takeDirectory out']
    , cmdBinary        = "justorthologs_format.sh"
-   , cmdArguments     = [out', gffPath, faaPath]
+   , cmdArguments     = [out', gffPath, faaPath']
    , cmdExitCode      = ExitSuccess
    , cmdRmPatterns    = [out, tmp']
    }

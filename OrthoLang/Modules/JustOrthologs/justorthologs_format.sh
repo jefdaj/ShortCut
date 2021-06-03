@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-set -x # TODO remove
-
 OUTPATH="$1"; shift
 OUTDIR="$(dirname "$OUTPATH")"
 GFFPATH="$1"; shift
