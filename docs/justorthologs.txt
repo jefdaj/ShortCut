@@ -1,0 +1,2 @@
+Search for orhtologs in two genomes using both the "related" and "distant" settings.
+This should be the default if you aren't sure which one to use.

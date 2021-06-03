@@ -1,0 +1,2 @@
+Takes a GFF3 file and a matching Fasta file for the same genome.
+Returns a Fasta file in "JustOrthologs format" (CDS sorted by length, with some added asterisks).
