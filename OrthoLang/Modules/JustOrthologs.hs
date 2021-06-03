@@ -3,7 +3,7 @@ module OrthoLang.Modules.JustOrthologs where
 import Development.Shake
 import OrthoLang.Types
 import OrthoLang.Interpreter
-import OrthoLang.Modules.SeqIO (faa)
+import OrthoLang.Modules.SeqIO (faa, mkConcat)
 
 -- TODO set -t to match nproc
 -- TODO what's the correlation value, and should the search fns expose it?
@@ -14,7 +14,7 @@ olModule :: Module
 olModule = Module
   { mName = "JustOrthologs"
   , mDesc = "A Fast, Accurate, and User-Friendly Ortholog-Identification Algorithm"
-  , mTypes = [gff3, jof, jor]
+  , mTypes = [faa, gff3, jof, jor]
   , mGroups = []
   , mEncodings = []
   , mRules = []
@@ -23,6 +23,7 @@ olModule = Module
     , justOrthologs       , justOrthologsEach       , justOrthologsAll
     , justOrthologsRelated, justOrthologsRelatedEach, justOrthologsRelatedAll
     , justOrthologsDistant, justOrthologsDistantEach, justOrthologsDistantAll
+    , concatJor
     ]
   }
 
@@ -79,8 +80,8 @@ justOrthologsFormatEach = newFnA2
 --------------------------
 
 -- TODO use a list of args rather than the whole cmddesc here?
-mkJustOrthologs :: String -> [String] -> Function
-mkJustOrthologs name extraArgs = newFnA2
+mkSearch :: String -> [String] -> Function
+mkSearch name extraArgs = newFnA2
   name
   (Exactly jof, Exactly jof)
   (Exactly jor)
@@ -91,36 +92,51 @@ aJustOrthologs :: [String] -> NewAction2
 aJustOrthologs extraArgs = undefined
 
 justOrthologs :: Function
-justOrthologs = mkJustOrthologs "justorthologs" ["-c"]
+justOrthologs = mkSearch "justorthologs" ["-c"]
 
 justOrthologsDistant :: Function
-justOrthologsDistant = mkJustOrthologs "justorthologs_distant" ["-d"]
+justOrthologsDistant = mkSearch "justorthologs_distant" ["-d"]
 
 justOrthologsRelated :: Function
-justOrthologsRelated = mkJustOrthologs "justorthologs_related" []
+justOrthologsRelated = mkSearch "justorthologs_related" []
 
 --------------------
 -- _each variants --
 --------------------
 
+mkEach :: String -> Function
+mkEach singleName = newFnA2
+  (singleName ++ "_each")
+  (Exactly jof, Exactly $ ListOf jof)
+  (Exactly $ ListOf jor)
+  (newMap2of2 singleName)
+  []
+
 justOrthologsEach :: Function
-justOrthologsEach = undefined
+justOrthologsEach = mkEach "justorthologs"
 
 justOrthologsDistantEach :: Function
-justOrthologsDistantEach = undefined
+justOrthologsDistantEach = mkEach "justorthologs_distant"
 
 justOrthologsRelatedEach :: Function
-justOrthologsRelatedEach = undefined
+justOrthologsRelatedEach = mkEach "justorthologs_related"
 
 -------------------
 -- _all variants --
 -------------------
 
+-- TODO this makes sense, right? check that they can be concatenated
+concatJor :: Function
+concatJor = mkConcat jor
+
+mkAll :: String -> Function -> Function
+mkAll name eachFn = compose1 name [] eachFn concatJor
+
 justOrthologsAll :: Function
-justOrthologsAll = undefined
+justOrthologsAll = mkAll "justorthologs_all" justOrthologsEach
 
 justOrthologsDistantAll :: Function
-justOrthologsDistantAll = undefined
+justOrthologsDistantAll = mkAll "justorthologs_distant_all" justOrthologsDistantEach
 
 justOrthologsRelatedAll :: Function
-justOrthologsRelatedAll = undefined
+justOrthologsRelatedAll = mkAll "justorthologs_related_all" justOrthologsRelatedEach
