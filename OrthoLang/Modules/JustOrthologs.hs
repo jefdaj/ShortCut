@@ -5,12 +5,7 @@ import OrthoLang.Types
 import OrthoLang.Interpreter
 import OrthoLang.Modules.SeqIO (faa)
 
--- TODO jof type "justorthologs format" (sorted fasta coding sequences with the asterisks)
--- TODO mapped justorthologs_format_each
--- TODO gff3 type?
--- TODO justorthologs_format : gff faa -> jff to extract the proper cds format from just one gff3 + reference genome pair
 -- TODO set -t to match nproc
--- TODO search functions: justorthologs_related, justorthologs_distant, justorthologs (combined)
 -- TODO what's the correlation value, and should the search fns expose it?
 -- TODO orthogroups function to extract them from the output (or is it just pairs here?)
 -- TODO express the optional compression of the input fasta files
@@ -24,11 +19,10 @@ olModule = Module
   , mEncodings = []
   , mRules = []
   , mFunctions =
-    [ justOrthologsFormat
-    , justOrthologsFormatEach
-    , justOrthologs
-    , justOrthologsRelated
-    , justOrthologsDistant
+    [ justOrthologsFormat , justOrthologsFormatEach
+    , justOrthologs       , justOrthologsEach       , justOrthologsAll
+    , justOrthologsRelated, justOrthologsRelatedEach, justOrthologsRelatedAll
+    , justOrthologsDistant, justOrthologsDistantEach, justOrthologsDistantAll
     ]
   }
 
@@ -104,3 +98,29 @@ justOrthologsDistant = mkJustOrthologs "justorthologs_distant" ["-d"]
 
 justOrthologsRelated :: Function
 justOrthologsRelated = mkJustOrthologs "justorthologs_related" []
+
+--------------------
+-- _each variants --
+--------------------
+
+justOrthologsEach :: Function
+justOrthologsEach = undefined
+
+justOrthologsDistantEach :: Function
+justOrthologsDistantEach = undefined
+
+justOrthologsRelatedEach :: Function
+justOrthologsRelatedEach = undefined
+
+-------------------
+-- _all variants --
+-------------------
+
+justOrthologsAll :: Function
+justOrthologsAll = undefined
+
+justOrthologsDistantAll :: Function
+justOrthologsDistantAll = undefined
+
+justOrthologsRelatedAll :: Function
+justOrthologsRelatedAll = undefined
