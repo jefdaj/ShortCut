@@ -5,7 +5,7 @@ import OrthoLang.Types
 import OrthoLang.Interpreter
 import OrthoLang.Interpreter.Sanitize (unhashIDsFile)
 import OrthoLang.Util (digest)
-import OrthoLang.Modules.SeqIO (faa, mkConcat)
+import OrthoLang.Modules.SeqIO (fna, mkConcat)
 import OrthoLang.Modules.Load (mkLoad, mkLoadEach, mkLoadGlob)
 import Data.Maybe (fromJust)
 import System.Exit (ExitCode(..))
@@ -20,7 +20,7 @@ olModule :: Module
 olModule = Module
   { mName = "JustOrthologs"
   , mDesc = "A Fast, Accurate, and User-Friendly Ortholog-Identification Algorithm"
-  , mTypes = [faa, gff, jof, jor]
+  , mTypes = [fna, gff, jof, jor]
   , mGroups = []
   , mEncodings = []
   , mRules = []
@@ -72,36 +72,39 @@ loadGffGlob = mkLoadGlob       "load_gff_glob" loadGffEach
 justOrthologsFormat :: Function
 justOrthologsFormat = newFnA2
   "justorthologs_format"
-  (Exactly gff, Exactly faa) -- TODO wait, is this always fna?
+  (Exactly gff, Exactly fna) -- TODO wait, is this always fna?
   (Exactly jof)
   aJustOrthologsFormat
   []
 
--- TODO this probably needs to re-load the faa after creating it to deal with ID hashing
+-- TODO this probably needs to re-load the fna after creating it to deal with ID hashing
 -- TODO also have to re-hash the ids in the final fasta?
 aJustOrthologsFormat :: NewAction2
-aJustOrthologsFormat (ExprPath out) gffPath faaPath = do
+aJustOrthologsFormat (ExprPath out) gffPath fnaPath = do
   cfg <- fmap fromJust getShakeExtra
   let tmpDir = cacheDir cfg "justorthologs"
       loc    = "modules.justorthologs.aJustOrthologsFormat"
       tmp'   = fromPath loc cfg tmpDir
-      out'   = traceA loc out [tmp', out, gffPath, faaPath]
-      faaPath' = tmp' </> digest loc faaPath
-  unhashIDsFile (toPath loc cfg faaPath) faaPath'
-  runCmd $ CmdDesc
-   { cmdParallel      = False
-   , cmdFixEmpties    = False
-   , cmdOutPath       = out'
-   , cmdInPatterns    = [gffPath, faaPath']
-   , cmdNoNeedDirs    = []
-   , cmdExtraOutPaths = []
-   , cmdSanitizePaths = []
-   , cmdOptions       = [Cwd $ takeDirectory out']
-   , cmdBinary        = "justorthologs_format.sh"
-   , cmdArguments     = [out', gffPath, faaPath']
-   , cmdExitCode      = ExitSuccess
-   , cmdRmPatterns    = [out, tmp']
-   }
+      out'   = traceA loc out [tmp', out, gffPath, fnaPath]
+      tmpIn'  = tmp' </> digest loc fnaPath
+      tmpOut' = tmp' </> digest loc out
+  unhashIDsFile (toPath loc cfg fnaPath) tmpIn' -- TODO skip if tmpIn' exists
+  runCmd $ CmdDesc -- TODO skip if tmpOut' exists
+    { cmdParallel      = False
+    , cmdFixEmpties    = False
+    , cmdOutPath       = tmpOut'
+    , cmdInPatterns    = [gffPath, tmpIn']
+    , cmdNoNeedDirs    = []
+    , cmdExtraOutPaths = []
+    , cmdSanitizePaths = []
+    , cmdOptions       = [Cwd $ takeDirectory out']
+    , cmdBinary        = "justorthologs_format.sh"
+    , cmdArguments     = [tmpOut', gffPath, tmpIn']
+    , cmdExitCode      = ExitSuccess
+    , cmdRmPatterns    = [tmpOut', tmp']
+    }
+  -- TODO do this step by composing with a load fn instead?
+  hashIDsFile True (toPath loc cfg tmpOut') (toPath loc cfg out')
 
 -- TODO is it a problem that users have to manually match list elements up?
 -- TODO at least warn that set operations will mess it up
@@ -109,7 +112,7 @@ aJustOrthologsFormat (ExprPath out) gffPath faaPath = do
 justOrthologsFormatEach :: Function
 justOrthologsFormatEach = newFnA2
   "justorthologs_format_each"
-  (Exactly $ ListOf gff, Exactly $ ListOf faa)
+  (Exactly $ ListOf gff, Exactly $ ListOf fna)
   (Exactly $ ListOf jof)
   undefined -- TODO new fn to zip/map over both together?
   []

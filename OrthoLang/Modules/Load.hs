@@ -117,7 +117,7 @@ aLoadHash hashSeqIDs t src = do
       let idsPath' = hashPath' <.> "ids"
           idsPath  = toPath loc cfg idsPath'
       unlessExists idsPath' $ do
-        hashIDsFile src hashPath -- TODO remove unlessExists?
+        hashIDsFile False src hashPath -- TODO remove unlessExists?
         aLoadIDs idsPath' -- TODO do it anyway? "reloadseqids" should have already
       dRef <- fmap fromJust getShakeExtra
       liftIO $ addDigest dRef t hashPath

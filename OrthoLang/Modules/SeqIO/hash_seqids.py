@@ -16,6 +16,7 @@ def hash_id(seqid):
 outfa = argv[1]
 outids = outfa + '.ids'
 infa = argv[2]
+allow_duplicate_ids = bool(argv[3])
 
 # print argv
 # print 'outfa', outfa
@@ -28,7 +29,7 @@ SEQIDS = {}
 with open(outfa, 'w') as out:
     for seq in SeqIO.parse(infa, 'fasta'):
         hashed = hash_id(seq.description)
-        if hashed in SEQIDS:
+        if (not allow_duplicate_ids) and (hashed in SEQIDS):
             raise Exception('duplicate seqid: %s -> %s' % (hashed, seq.description))
         SEQIDS[hashed] = seq.description
         seq.id = hashed

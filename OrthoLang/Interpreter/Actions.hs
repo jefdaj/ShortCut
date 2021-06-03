@@ -662,7 +662,7 @@ handleCmdError bin n stderrPath rmPatterns = do
   cfg <- fmap fromJust getShakeExtra
   files' <- concat <$> mapM (matchPattern cfg) rmPatterns
   let files'' = sort $ nub files'
-  liftIO $ rmAll files''
+  -- liftIO $ rmAll files''
   let errMsg = [ bin ++ " failed with " ++ show n ++ "."
                , "The files it was working on have been deleted:"
                ] ++ files''

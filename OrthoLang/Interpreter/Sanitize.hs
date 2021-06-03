@@ -88,8 +88,8 @@ hashIDsTxt txt = (unlines lines', M.fromList seqids)
 --   return ids'
 
 -- rewrite of hashIDsFile as a python script; will it fix the space leak?
-hashIDsFile :: Path -> Path -> Action ()
-hashIDsFile inFa outFa = do
+hashIDsFile :: Bool -> Path -> Path -> Action ()
+hashIDsFile allowDuplicateIDs inFa outFa = do
   cfg <- fmap fromJust getShakeExtra
   let loc = "interpreter.sanitize.hashIDsFile"
       inFa'   = fromPath loc cfg inFa
@@ -103,7 +103,7 @@ hashIDsFile inFa outFa = do
   liftIO $ createDirectoryIfMissing True $ takeDirectory outFa'
   runCmd $ CmdDesc
     { cmdBinary = "hash_seqids.py"
-    , cmdArguments = [outFa', inFa']
+    , cmdArguments = [outFa', inFa', show allowDuplicateIDs]
     , cmdFixEmpties = False
     , cmdParallel = False
     , cmdOptions = []
