@@ -5,6 +5,8 @@ import OrthoLang.Types
 import OrthoLang.Interpreter
 import OrthoLang.Modules.SeqIO (faa, mkConcat)
 import OrthoLang.Modules.Load (mkLoad, mkLoadEach, mkLoadGlob)
+import Data.Maybe (fromJust)
+import System.Exit (ExitCode(..))
 
 -- TODO set -t to match nproc
 -- TODO what's the correlation value, and should the search fns expose it?
@@ -44,11 +46,10 @@ jor = Type
   }
 
 -- TODO add standard load fns for these (see weird details in SeqIO)
--- TODO is this specifically GFF3?
 gff :: Type
 gff = Type
   { tExt = "gff"
-  , tDesc = "NCBI genome annotation file"
+  , tDesc = "NCBI genome annotation file (version 3)"
   , tShow = defaultShow
   }
 
@@ -75,7 +76,26 @@ justOrthologsFormat = newFnA2
 
 -- TODO this probably needs to re-load the faa after creating it to deal with ID hashing
 aJustOrthologsFormat :: NewAction2
-aJustOrthologsFormat = undefined
+aJustOrthologsFormat (ExprPath out) gffPath faaPath = do
+  cfg <- fmap fromJust getShakeExtra
+  let tmpDir = cacheDir cfg "justorthologs"
+      loc    = "modules.justorthologs.aJustOrthologsFormat"
+      tmp'   = fromPath loc cfg tmpDir
+      out'   = traceA loc out [tmp', out, gffPath, faaPath]
+  runCmd $ CmdDesc
+   { cmdParallel      = False
+   , cmdFixEmpties    = False
+   , cmdOutPath       = out'
+   , cmdInPatterns    = [gffPath, faaPath]
+   , cmdNoNeedDirs    = []
+   , cmdExtraOutPaths = []
+   , cmdSanitizePaths = []
+   , cmdOptions       = []
+   , cmdBinary        = "gff3_parser.py"
+   , cmdArguments     = ["-g", gffPath, "-f", faaPath, "-o", out']
+   , cmdExitCode      = ExitSuccess
+   , cmdRmPatterns    = [out, tmp']
+   }
 
 -- TODO is it a problem that users have to manually match list elements up?
 -- TODO at least warn that set operations will mess it up
