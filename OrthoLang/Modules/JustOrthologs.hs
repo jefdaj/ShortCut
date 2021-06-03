@@ -7,6 +7,7 @@ import OrthoLang.Modules.SeqIO (faa, mkConcat)
 import OrthoLang.Modules.Load (mkLoad, mkLoadEach, mkLoadGlob)
 import Data.Maybe (fromJust)
 import System.Exit (ExitCode(..))
+import System.FilePath (takeDirectory)
 
 -- TODO set -t to match nproc
 -- TODO what's the correlation value, and should the search fns expose it?
@@ -90,9 +91,9 @@ aJustOrthologsFormat (ExprPath out) gffPath faaPath = do
    , cmdNoNeedDirs    = []
    , cmdExtraOutPaths = []
    , cmdSanitizePaths = []
-   , cmdOptions       = []
-   , cmdBinary        = "gff3_parser.py"
-   , cmdArguments     = ["-g", gffPath, "-f", faaPath, "-o", out']
+   , cmdOptions       = [Cwd $ takeDirectory out']
+   , cmdBinary        = "justorthologs_format.sh"
+   , cmdArguments     = [out', gffPath, faaPath]
    , cmdExitCode      = ExitSuccess
    , cmdRmPatterns    = [out, tmp']
    }

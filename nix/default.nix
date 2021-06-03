@@ -69,7 +69,6 @@ let
   };
 
   # TODO add a module, or remove this if not helpful
-  justorthologs = myPython2.callPackage sources.justorthologs { inherit (myPython2) biopython; };
 
 # TODO these should probably be converted to a list of overlays
 in pkgs // {
