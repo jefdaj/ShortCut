@@ -46,6 +46,7 @@ jor = Type
   , tShow = defaultShow
   }
 
+-- TODO add standard load fns for these (see weird details in SeqIO)
 gff3 :: Type
 gff3 = Type
   { tExt = "gff3"
@@ -69,6 +70,8 @@ aJustOrthologsFormat :: NewAction2
 aJustOrthologsFormat = undefined
 
 -- TODO is it a problem that users have to manually match list elements up?
+-- TODO at least warn that set operations will mess it up
+-- TODO and have an error for when a pair doesn't match
 justOrthologsFormatEach :: Function
 justOrthologsFormatEach = newFnA2
   "justorthologs_format_each"
@@ -81,19 +84,23 @@ justOrthologsFormatEach = newFnA2
 -- search for orthologs --
 --------------------------
 
-mkJustOrthologs :: String -> (CmdDesc -> CmdDesc) -> Function
-mkJustOrthologs name descFn = newFnA2
+-- TODO use a list of args rather than the whole cmddesc here?
+mkJustOrthologs :: String -> [String] -> Function
+mkJustOrthologs name extraArgs = newFnA2
   name
   (Exactly jof, Exactly jof)
   (Exactly jor)
-  (undefined descFn)
+  (aJustOrthologs extraArgs)
   []
 
+aJustOrthologs :: [String] -> NewAction2
+aJustOrthologs extraArgs = undefined
+
 justOrthologs :: Function
-justOrthologs = mkJustOrthologs "justorthologs" id
+justOrthologs = mkJustOrthologs "justorthologs" ["-c"]
 
 justOrthologsDistant :: Function
-justOrthologsDistant = mkJustOrthologs "justorthologs_distant" undefined
+justOrthologsDistant = mkJustOrthologs "justorthologs_distant" ["-d"]
 
 justOrthologsRelated :: Function
-justOrthologsRelated = mkJustOrthologs "justorthologs_related" undefined
+justOrthologsRelated = mkJustOrthologs "justorthologs_related" []
