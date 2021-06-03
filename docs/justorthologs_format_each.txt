@@ -1,0 +1,26 @@
+WARNING! This one is fragile in that you have to manually make sure the two input lists match up.
+         If they don't, it will at least try to fail rather than giving nonsense results.
+         I recomend writing the lists directly in the source code, or loading them from text files.
+         Avoid globbing or set operations, which might randomly re-order them.
+
+This is one reliable way to write the lists out. They're easy to visually check:
+
+formatted_genomes = justorthologs_format_each
+                      ["speciesA.gff3" , "speciesB.gff3" , "speciesC.gff3" ]
+                      ["speciesA.fasta", "speciesB.fasta", "speciesC.fasta"]
+
+The other reliable way is to create separate text files:
+
+formatted_genomes = justorthologs_format_each
+                      (load_gff_each (load_list "gffs.txt"))
+                      (load_faa_each (load_list "faas.txt"))
+
+This is an example of an *unreliable* way to do it:
+
+formatted_genomes = justorthologs_format_each
+                      (load_gff_glob "species*.gff3")
+                      (load_faa_glob "species*.fasta")
+
+If you go that route, check that the lists are correct in the REPL before
+running your searches. Also note that it might work now, but stop working if
+someone adds files with a different naming scheme later.

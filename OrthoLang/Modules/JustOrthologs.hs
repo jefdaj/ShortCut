@@ -4,6 +4,7 @@ import Development.Shake
 import OrthoLang.Types
 import OrthoLang.Interpreter
 import OrthoLang.Modules.SeqIO (faa, mkConcat)
+import OrthoLang.Modules.Load (mkLoad, mkLoadEach, mkLoadGlob)
 
 -- TODO set -t to match nproc
 -- TODO what's the correlation value, and should the search fns expose it?
@@ -14,12 +15,13 @@ olModule :: Module
 olModule = Module
   { mName = "JustOrthologs"
   , mDesc = "A Fast, Accurate, and User-Friendly Ortholog-Identification Algorithm"
-  , mTypes = [faa, gff3, jof, jor]
+  , mTypes = [faa, gff, jof, jor]
   , mGroups = []
   , mEncodings = []
   , mRules = []
   , mFunctions =
-    [ justOrthologsFormat , justOrthologsFormatEach
+    [ loadGff, loadGffEach, loadGffGlob
+    , justOrthologsFormat , justOrthologsFormatEach
     , justOrthologs       , justOrthologsEach       , justOrthologsAll
     , justOrthologsRelated, justOrthologsRelatedEach, justOrthologsRelatedAll
     , justOrthologsDistant, justOrthologsDistantEach, justOrthologsDistantAll
@@ -42,12 +44,22 @@ jor = Type
   }
 
 -- TODO add standard load fns for these (see weird details in SeqIO)
-gff3 :: Type
-gff3 = Type
-  { tExt = "gff3"
+-- TODO is this specifically GFF3?
+gff :: Type
+gff = Type
+  { tExt = "gff"
   , tDesc = "NCBI genome annotation file"
   , tShow = defaultShow
   }
+
+--------------------
+-- load gff files --
+--------------------
+
+-- TODO should these do anything with hashing IDs??
+loadGff     = mkLoad     False "load_gff"      (Exactly gff)
+loadGffEach = mkLoadEach False "load_gff_each" (Exactly gff)
+loadGffGlob = mkLoadGlob       "load_gff_glob" loadGffEach
 
 --------------------
 -- format genomes --
@@ -56,11 +68,12 @@ gff3 = Type
 justOrthologsFormat :: Function
 justOrthologsFormat = newFnA2
   "justorthologs_format"
-  (Exactly gff3, Exactly faa)
+  (Exactly gff, Exactly faa) -- TODO wait, is this always fna?
   (Exactly jof)
   aJustOrthologsFormat
   []
 
+-- TODO this probably needs to re-load the faa after creating it to deal with ID hashing
 aJustOrthologsFormat :: NewAction2
 aJustOrthologsFormat = undefined
 
@@ -70,7 +83,7 @@ aJustOrthologsFormat = undefined
 justOrthologsFormatEach :: Function
 justOrthologsFormatEach = newFnA2
   "justorthologs_format_each"
-  (Exactly $ ListOf gff3, Exactly $ ListOf faa)
+  (Exactly $ ListOf gff, Exactly $ ListOf faa)
   (Exactly $ ListOf jof)
   undefined -- TODO new fn to zip/map over both together?
   []
