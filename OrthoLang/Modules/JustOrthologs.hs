@@ -104,6 +104,7 @@ aJustOrthologsFormat (ExprPath out) gffPath fnaPath = do
     , cmdRmPatterns    = [tmpOut', tmp']
     }
   -- TODO do this step by composing with a load fn instead?
+  -- TODO but first check that justorthologs itself runs on the hashed version
   hashIDsFile True (toPath loc cfg tmpOut') (toPath loc cfg out')
 
 -- TODO is it a problem that users have to manually match list elements up?
