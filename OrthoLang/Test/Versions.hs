@@ -37,7 +37,7 @@ versionScripts = map (\(a,b) -> (a, os ++ ":" ++ b))
   , ("makeblastdb"  , "makeblastdb.sh")
   -- , ("mmseqs"       , "mmseqs.sh")
   , ("muscle"       , "muscle.sh")
-  -- , ("orthofinder"  , "orthofinder.sh")
+  , ("orthofinder"  , "orthofinder.sh")
   , ("psiblast"     , "psiblast.sh") -- TODO remove?
 
   , ("python2"      , "python2.sh")
