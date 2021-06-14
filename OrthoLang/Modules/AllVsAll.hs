@@ -20,6 +20,10 @@ olModule = Module
   , mFunctions = [] -- TODO put the functions here, or in their respective modules?
   }
 
+-- TODO should this actually be an encoding rather than a file type?
+--      maybe make the name more general, but use the combined extensions like bht.ava?
+-- TODO but is the subject and query type also important? like faa.ava or whatever?
+-- TODO alternatively, can you make all the hit table types compatible and avoid that?
 ava :: Type
 ava = Type
   { tExt  = "ava"
