@@ -5,6 +5,16 @@ module OrthoLang.Modules.AllVsAll
   )
   where
 
+-- TODO incorporate an eExpr step to expand macros in the expression if any
+-- TODO then you can also use the regular rExpr fn to get the path of each one, right?
+--      it's actually pretty simple overall: make a grid of fn calls, evaluate them, and return hashes
+-- TODO also, would rExpr automatically expand them in the process of compiling? check that
+-- TODO also, could you just pass existing fns to get all the required info?
+--      input + output types, seed (that one from main expr), prefix...
+-- TODO not all blast-like fns have the same args, for example diamond_blastp has sensitivity
+--      so we'll need to have a way of translating that:
+--      Expr -> Expr -> Expr? Supply the two fasta args and the rest is filled in from orig. fn call?
+
 -- TODO this should be easily doable using the extractExprs trick for lists but not fn calls,
 --      but should you bother since it also might not be needed for the greencut algorithm?
 
@@ -25,7 +35,7 @@ olModule = Module
   , mGroups = []
   , mEncodings = []
   , mRules = []
-  , mFunctions = [] -- TODO put the functions here, or in their respective modules?
+  , mFunctions = map mkAva ["diamond_blastp"] -- TODO put the functions here, or in their respective modules?
   }
 
 -- TODO should this actually be an encoding rather than a file type?
@@ -77,6 +87,10 @@ cellDigest c d ms fnName t (PathDigest eHash) (PathDigest qHash) (PathDigest sHa
     expr   = Fun t ms [] fnName []
     hashes = [eHash, qHash, sHash]
     path   = unsafeExprPathExplicit c d fnName t ms hashes
+
+-- TODO shit. forgot to take expansions into account!
+--      for example we can't just use blastp because it's implemented as blastp_db + makeblastdb
+--      should still be able to do it by building the expr for each cell and evaling it though
 
 aAva :: String -> NewAction2
 aAva fnName (ExprPath oPath) ePath fasPath = do
