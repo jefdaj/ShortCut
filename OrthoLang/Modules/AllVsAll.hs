@@ -8,6 +8,9 @@ import Development.Shake
 import OrthoLang.Types
 import OrthoLang.Interpreter
 import OrthoLang.Modules.SeqIO (faa)
+import OrthoLang.Modules.Blast (bht)
+import OrthoLang.Interpreter.Paths (pathDigest, getExprPathSeed, unsafeExprPathExplicit)
+import Data.List  (intercalate)
 import Data.Maybe (fromJust)
 
 olModule :: Module
@@ -48,37 +51,45 @@ ava = Type
 --     subjExpr  = Map $ MappedExpr faa subjFaPath  (return subjFaPath)
 
 -- Warning: the fn has to be of type : num faa faa -> bht, but this is not enforced in the code yet
-mkAva :: String -> Function -> Function
-mkAva name fn = newFnA2
-  (name ++ "_ava")
+mkAva :: String -> Function
+mkAva name = newFnA2
+  (name ++ "_ava") -- note that name must match the non-ava single version
   (Exactly num, Exactly $ ListOf faa)
   (Exactly ava)
-  (aAva fn)
+  (aAva name)
   []
 
-rowHashes ePath qPath sPaths = qHash : eHashes
+-- note that the first qDig is the row name
+rowDigests :: Config -> DigestsRef -> Maybe Seed -> String -> Type
+           -> PathDigest -> PathDigest -> [PathDigest]
+           -> [PathDigest]
+rowDigests c d ms fnName t eDig qDig sDigs = qDig : map (cellDigest c d ms fnName t eDig qDig) sDigs
+
+cellDigest :: Config -> DigestsRef-> Maybe Seed -> String -> Type
+           -> PathDigest -> PathDigest -> PathDigest
+           -> PathDigest
+cellDigest c d ms fnName t (PathDigest eHash) (PathDigest qHash) (PathDigest sHash) = pathDigest path
   where
-    qHash   = undefined
-    eHashes = undefined
-  -- TODO add the q path hash first as the row name
-  -- TODO map over sPaths. for each:
-  --        create the fn expr
-  --        find its hash
-  --        return the hash (to the row)
+    expr   = Fun t ms [] fnName []
+    hashes = [eHash, qHash, sHash]
+    path   = unsafeExprPathExplicit c d fnName t ms hashes
 
 -- TODO is anything besides the name needed?
 -- it seems like it has to be name : num faa.list -> bht basically
 -- oh, except the result table type might be different?
 -- TODO remove the other hit table types? check if they're needed at all
 -- TODO would this be better to raise up to the old compiler type function level rather than NewAction?
-aAva :: Function -> NewAction2
-aAva fn (ExprPath oPath) ePath fasPath = do
-  cfg <- fmap fromJust getShakeExtra
+aAva :: String -> NewAction2
+aAva fnName (ExprPath oPath) ePath fasPath = do
+  cfg  <- fmap fromJust getShakeExtra
+  dRef <- fmap fromJust getShakeExtra
   let loc = "modules.allvsall.aAva"
-      out = toPath loc cfg oPath
+      ms  = getExprPathSeed oPath
   faPaths <- readPaths loc fasPath
-  need' loc $ map (fromPath loc cfg) faPaths
-  let header = "" : (map undefined faPaths) -- TODO tab-separated list of input fa expr path hashes
-      rows   = map (\q -> rowHashes ePath q faPaths) faPaths
-      table  = header : rows
-  undefined
+  let eDig   = pathDigest $ toPath loc cfg ePath
+      faDigs = map pathDigest faPaths
+  need' loc $ ePath : map (fromPath loc cfg) faPaths
+  let header = intercalate "\t" $ "" : map (\(PathDigest d) -> d) faDigs
+      rows   = map (\qDig -> rowDigests cfg dRef ms fnName bht eDig qDig faDigs) faDigs
+      table  = header : map (intercalate "\t" . map (\(PathDigest d) -> d)) rows
+  writeCachedLines loc oPath table
