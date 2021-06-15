@@ -1,4 +1,8 @@
 module OrthoLang.Modules.AllVsAll
+  ( olModule
+  , ava
+  , mkAva
+  )
   where
 
 -- TODO this should be easily doable using the extractExprs trick for lists but not fn calls,
@@ -59,26 +63,21 @@ mkAva name = newFnA2
   (aAva name)
   []
 
--- note that the first qDig is the row name
 rowDigests :: Config -> DigestsRef -> Maybe Seed -> String -> Type
            -> PathDigest -> PathDigest -> [PathDigest]
-           -> [PathDigest]
-rowDigests c d ms fnName t eDig qDig sDigs = qDig : map (cellDigest c d ms fnName t eDig qDig) sDigs
+           -> [(Path, PathDigest)]
+rowDigests c d ms fnName t eDig qDig sDigs = map (cellDigest c d ms fnName t eDig qDig) sDigs
 
 cellDigest :: Config -> DigestsRef-> Maybe Seed -> String -> Type
            -> PathDigest -> PathDigest -> PathDigest
-           -> PathDigest
-cellDigest c d ms fnName t (PathDigest eHash) (PathDigest qHash) (PathDigest sHash) = pathDigest path
+           -> (Path, PathDigest)
+cellDigest c d ms fnName t (PathDigest eHash) (PathDigest qHash) (PathDigest sHash)
+  = (path, pathDigest path)
   where
     expr   = Fun t ms [] fnName []
     hashes = [eHash, qHash, sHash]
     path   = unsafeExprPathExplicit c d fnName t ms hashes
 
--- TODO is anything besides the name needed?
--- it seems like it has to be name : num faa.list -> bht basically
--- oh, except the result table type might be different?
--- TODO remove the other hit table types? check if they're needed at all
--- TODO would this be better to raise up to the old compiler type function level rather than NewAction?
 aAva :: String -> NewAction2
 aAva fnName (ExprPath oPath) ePath fasPath = do
   cfg  <- fmap fromJust getShakeExtra
@@ -89,7 +88,11 @@ aAva fnName (ExprPath oPath) ePath fasPath = do
   let eDig   = pathDigest $ toPath loc cfg ePath
       faDigs = map pathDigest faPaths
   need' loc $ ePath : map (fromPath loc cfg) faPaths
-  let header = intercalate "\t" $ "" : map (\(PathDigest d) -> d) faDigs
-      rows   = map (\qDig -> rowDigests cfg dRef ms fnName bht eDig qDig faDigs) faDigs
-      table  = header : map (intercalate "\t" . map (\(PathDigest d) -> d)) rows
+  let header  = intercalate "\t" $ "" : map (\(PathDigest d) -> d) faDigs
+      cells   = map (\qDig -> rowDigests cfg dRef ms fnName bht eDig qDig faDigs) faDigs
+      digests = (map . map) (\(_, PathDigest d) -> d) cells
+      rows    = map (\(PathDigest a,b) -> intercalate "\t" (a:b)) $ zip faDigs digests
+      paths   = map (fromPath loc cfg . fst) $ concat cells
+      table   = header : undefined
+  need' loc paths
   writeCachedLines loc oPath table
