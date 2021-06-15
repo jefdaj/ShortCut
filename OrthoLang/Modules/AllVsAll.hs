@@ -4,10 +4,11 @@ module OrthoLang.Modules.AllVsAll
 -- TODO this should be easily doable using the extractExprs trick for lists but not fn calls,
 --      but should you bother since it also might not be needed for the greencut algorithm?
 
--- import Development.Shake
+import Development.Shake
 import OrthoLang.Types
 import OrthoLang.Interpreter
 import OrthoLang.Modules.SeqIO (faa)
+import Data.Maybe (fromJust)
 
 olModule :: Module
 olModule = Module
@@ -46,17 +47,38 @@ ava = Type
 --     queryExpr = Map $ MappedExpr faa queryFaPath (return queryFaPath)
 --     subjExpr  = Map $ MappedExpr faa subjFaPath  (return subjFaPath)
 
-mkAva :: String -> Function
-mkAva name = newExprExpansion
+-- Warning: the fn has to be of type : num faa faa -> bht, but this is not enforced in the code yet
+mkAva :: String -> Function -> Function
+mkAva name fn = newFnA2
   (name ++ "_ava")
-  [Exactly num, Exactly $ ListOf faa] -- TODO can this be more general?
+  (Exactly num, Exactly $ ListOf faa)
   (Exactly ava)
-  (mAva name)
+  (aAva fn)
   []
+
+rowHashes ePath qPath sPaths = qHash : eHashes
+  where
+    qHash   = undefined
+    eHashes = undefined
+  -- TODO add the q path hash first as the row name
+  -- TODO map over sPaths. for each:
+  --        create the fn expr
+  --        find its hash
+  --        return the hash (to the row)
 
 -- TODO is anything besides the name needed?
 -- it seems like it has to be name : num faa.list -> bht basically
 -- oh, except the result table type might be different?
 -- TODO remove the other hit table types? check if they're needed at all
-mAva :: String -> ExprExpansion
-mAva = undefined
+-- TODO would this be better to raise up to the old compiler type function level rather than NewAction?
+aAva :: Function -> NewAction2
+aAva fn (ExprPath oPath) ePath fasPath = do
+  cfg <- fmap fromJust getShakeExtra
+  let loc = "modules.allvsall.aAva"
+      out = toPath loc cfg oPath
+  faPaths <- readPaths loc fasPath
+  need' loc $ map (fromPath loc cfg) faPaths
+  let header = "" : (map undefined faPaths) -- TODO tab-separated list of input fa expr path hashes
+      rows   = map (\q -> rowHashes ePath q faPaths) faPaths
+      table  = header : rows
+  undefined
